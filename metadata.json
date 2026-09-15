@@ -1,0 +1,6 @@
+{
+  "name": "Melch Agent Office",
+  "description": "Interactive multi-agent chatbot platform powered by live Gemini API. Features Main Bot hierarchy with authority to spawn specialist bots and designate access clearance levels, permitted tools, and compute budgets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
