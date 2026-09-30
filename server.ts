@@ -34,6 +34,27 @@ async function startServer() {
 
   app.use(express.json({ limit: '10mb' }));
 
+  // Shared Basic authentication is an interim control for a single-operator deployment.
+  // Terminate TLS at the reverse proxy; replace this with per-user authorization before multi-user launch.
+  if (process.env.NODE_ENV === 'production') {
+    const user = process.env.APP_BASIC_AUTH_USER;
+    const password = process.env.APP_BASIC_AUTH_PASSWORD;
+    if (!user || !password) {
+      throw new Error('APP_BASIC_AUTH_USER and APP_BASIC_AUTH_PASSWORD are required in production');
+    }
+    app.use('/api', (req, res, next) => {
+      const encoded = req.headers.authorization?.match(/^Basic (.+)$/i)?.[1];
+      const supplied = encoded ? Buffer.from(encoded, 'base64').toString('utf8') : '';
+      const expected = `${user}:${password}`;
+      const left = crypto.createHash('sha256').update(supplied).digest();
+      const right = crypto.createHash('sha256').update(expected).digest();
+      if (crypto.timingSafeEqual(left, right)) return next();
+      res.setHeader('WWW-Authenticate', 'Basic realm="Agent workspace"');
+      res.status(401).json({ error: 'Authentication required' });
+    });
+  }
+
+
   // --- API Routes ---
   app.get('/api/health', (req, res) => {
     res.json({
